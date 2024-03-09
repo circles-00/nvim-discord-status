@@ -10,6 +10,7 @@ import (
 )
 
 var discordAppId = ""
+var numberOfClients = 0
 
 func updateDiscordPresence(discordAppId *string, t time.Time, filename *string, gitRepo *string) {
 	if discordAppId == nil || len(*discordAppId) == 0 {
@@ -58,7 +59,13 @@ func handleTCPClient(conn net.Conn, startTime time.Time) {
 		// Read data from the client
 		bufferData, err := conn.Read(buffer)
 		if err != nil {
-			fmt.Println("Error:", err)
+      numberOfClients = numberOfClients - 1
+			fmt.Println("Error reading data from client:", err, numberOfClients)
+
+      if numberOfClients == 0 && discordAppId != "" {
+        panic("No more clients")
+      }
+
 			return
 		}
 
@@ -106,6 +113,7 @@ func main() {
 			continue
 		}
 
+    numberOfClients = numberOfClients + 1
 		// Handle client connection in a goroutine
 		go handleTCPClient(conn, t)
 	}

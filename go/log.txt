@@ -1,1 +1,1 @@
-sh: 1: /home/darknet/.local/share/nvim/site/pack/packer/start/nvim/go/discord_status: not found
+Server is listening on port 49069

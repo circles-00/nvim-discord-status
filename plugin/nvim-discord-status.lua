@@ -1,4 +1,3 @@
-local goProgramPID = nil
 local host, port = "127.0.0.1", 49069
 local TCPClient = require('nvim-discord-status.tcp_client')
 local utils = require('nvim-discord-status.utils')
@@ -18,17 +17,7 @@ vim.api.nvim_create_autocmd({ "VimEnter" }, {
     local path_to_script = utils.removeLastThreeParts(script_path)
 
     local absolute_path = "/" .. path_to_script .. "/" .. "go/discord_status > log.txt 2>&1 &"
-    local handle = io.popen(absolute_path .. "echo $!")
-
-    if (handle == nil) then
-      return
-    end
-
-    local pid = handle:read("*a")
-
-    handle:close()
-
-    goProgramPID = tonumber(pid)
+    io.popen(absolute_path)
 
     -- Wait for the TCP server to start
     utils.asyncSleep(1, function()
@@ -59,6 +48,5 @@ vim.api.nvim_create_autocmd({ "VimLeavePre" }, {
   pattern = { "*" },
   callback = function()
     client:close()
-    os.execute("kill " .. goProgramPID)
   end
 })

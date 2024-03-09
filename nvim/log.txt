@@ -1,1 +1,0 @@
-sh: 1: /home/darknet/.local/share/nvim/site/pack/packer/start/nvim/lua/nvim-discord-status/go/discord_status: not found

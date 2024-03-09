@@ -1,8 +1,7 @@
 local M = {}
 
-function M.setup(opts)
+M.setup = function(opts)
   opts = opts or {}
-
 
   local discordAppId = opts.discordAppId or error("Missing required option 'discordAppId'")
 

@@ -86,14 +86,15 @@ func handleTCPClient(conn net.Conn, startTime time.Time) {
 func main() {
 
 	// Listen for incoming connections
-	listener, err := net.Listen("tcp", "127.0.0.1:8080")
+  const port = 49069
+	listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
 	}
 	defer listener.Close()
 
-	fmt.Println("Server is listening on port 8080")
+	fmt.Printf("Server is listening on port %d\n", port)
 
 	t := time.Now()
 

@@ -1,7 +1,14 @@
 local M = {}
 
-function M.setup()
-   print("Everything is set up!")
+function M.setup(opts)
+  opts = opts or {}
+
+
+  local discordAppId = opts.discordAppId or error("Missing required option 'discordAppId'")
+
+  opts.discordAppId  = discordAppId
+
+  M.opts             = opts
 end
 
 return M

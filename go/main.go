@@ -3,23 +3,20 @@ package main
 import (
 	"fmt"
 	"net"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/hugolgst/rich-go/client"
-	"github.com/joho/godotenv"
 )
 
-func updateDiscordPresence(t time.Time, filename *string, gitRepo *string) {
-  dotEnvError := godotenv.Load()
-  if dotEnvError != nil {
-    panic(dotEnvError)
-  }
+var discordAppId = ""
 
-  appIdFromEnv := os.Getenv("DISCORD_APP_ID")
-  fmt.Printf("App ID: %s", appIdFromEnv)
-	err := client.Login(appIdFromEnv)
+func updateDiscordPresence(discordAppId *string, t time.Time, filename *string, gitRepo *string) {
+	if discordAppId == nil || len(*discordAppId) == 0 {
+		panic("Discord App ID is required")
+	}
+
+	err := client.Login(*discordAppId)
 
 	if err != nil {
 		panic(err)
@@ -35,9 +32,9 @@ func updateDiscordPresence(t time.Time, filename *string, gitRepo *string) {
 		},
 	}
 
-  if gitRepo != nil {
-    activity.Details = *gitRepo
-  }
+	if gitRepo != nil {
+		activity.Details = *gitRepo
+	}
 
 	if filename != nil {
 		activity.State = *filename
@@ -59,24 +56,30 @@ func handleTCPClient(conn net.Conn, startTime time.Time) {
 
 	for {
 		// Read data from the client
-		message, err := conn.Read(buffer)
+		bufferData, err := conn.Read(buffer)
 		if err != nil {
 			fmt.Println("Error:", err)
 			return
 		}
 
-		dir := string(buffer[:message])
-		dirParts := strings.Split(dir, "/")
-		filenameAndGitRepo := dirParts[len(dirParts)-1]
-    filename := strings.Split(filenameAndGitRepo, ":")[0]
-    gitRepo := strings.Split(filenameAndGitRepo, ":")[1]
+		message := string(buffer[:bufferData])
 
-		if len(filename) > 0 {
-			updateDiscordPresence(startTime, &filename, &gitRepo)
+		if strings.Contains(message, "connect") {
+			discordAppIdFromSocket := strings.Split(message, ":")[1]
+			discordAppId = discordAppIdFromSocket
+			updateDiscordPresence(&discordAppId, startTime, nil, nil)
+
+			continue
 		}
 
-		// Process and use the data (here, we'll just print it)
-		fmt.Printf("Received: %s\n", filename)
+		dirParts := strings.Split(message, "/")
+		filenameAndGitRepo := dirParts[len(dirParts)-1]
+		filename := strings.Split(filenameAndGitRepo, ":")[0]
+		gitRepo := strings.Split(filenameAndGitRepo, ":")[1]
+
+		if len(filename) > 0 {
+			updateDiscordPresence(&discordAppId, startTime, &filename, &gitRepo)
+		}
 	}
 }
 
@@ -93,8 +96,6 @@ func main() {
 	fmt.Println("Server is listening on port 8080")
 
 	t := time.Now()
-
-	updateDiscordPresence(t, nil, nil)
 
 	for {
 		// Accept incoming connections

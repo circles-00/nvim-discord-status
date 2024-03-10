@@ -48,7 +48,7 @@ function TCPClient:receive()
     if not self.socket then
         return nil, "Socket not initialized"
     end
-    local response, err, partial = self.socket:receive()
+    local response, err, partial = self.socket:receive(100)
     if not response then
         return nil, "Error receiving data: " .. err
     end

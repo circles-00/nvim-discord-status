@@ -12,13 +12,11 @@ NvimDiscordStatusActions.__index = NvimDiscordStatusActions
 
 ---@return NvimDiscordStatusActions
 function NvimDiscordStatusActions.new()
-  local self = setmetatable({
+  return setmetatable({
     host = "127.0.0.1",
     port = 49069,
     client = TCPClient:new()
   }, NvimDiscordStatusActions)
-
-  return self
 end
 
 ---@param setupOpts NvimDiscordStatusOptions
@@ -79,7 +77,7 @@ end
 
 function NvimDiscordStatusActions:registerCommands(binding)
   vim.cmd('command! Redact lua require("nvim-discord-status"):excludeOrIncludeDirectory()')
-  vim.keymap.set('n', binding, self.excludeOrIncludeDirectory, { noremap = true, silent = true })
+  vim.keymap.set('n', binding, '<cmd>Redact<CR>', { noremap = true, silent = true })
 end
 
 return NvimDiscordStatusActions

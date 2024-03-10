@@ -30,7 +30,6 @@ function NvimDiscordStatus:setup(opts)
     error("Missing required option 'discordAppId'")
   end
 
-
   self.opts = opts
 
   self.actions:connect(opts)

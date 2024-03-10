@@ -34,7 +34,8 @@ local nvim_discord_status = require("nvim-discord-status")
 
 nvim_discord_status.setup({
    discordAppId  = "YOUR_APP_ID",
-   excludedDirs = { "some_dir" }
+   excludedDirs = { "some_dir" },
+   cmdBinding  = "<C-x>"
 })
 ```
 
@@ -44,6 +45,10 @@ The plugin will automatically start when you open Neovim.
 The status will be updated when you open a new file or switch buffers.
 
 The status will dissapear when you close all instances of Neovim.
+
+# Comands
+- Toggle the current repository to be REDACTED or not.
+You can overwrite a binding via opts, or use the default one (seen above), or call `:Redact` command
 
 # Screenshots
 ![image](https://github.com/circles-00/nvim-discord-status/assets/42126548/3afab290-5478-41d8-bd68-9e91a52edbaa)

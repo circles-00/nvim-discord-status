@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"os"
 	"slices"
 	"strings"
 	"time"
@@ -13,6 +14,11 @@ import (
 
 var discordAppId = ""
 var NumberOfClients = 0
+
+const (
+  REDACT_COMMAND = "redact"
+  UNREDACT_COMMAND = "unredact"
+)
 
 func handlePanicTCPClient(err error) bool {
 	if err != nil {
@@ -50,13 +56,68 @@ func handleInitialClientConnection(message string, startTime time.Time, excluded
 	return false
 }
 
+func isRedacted(excludedDirsArray []string, cleanDirPath string) bool {
+	data, err := os.ReadFile("./excludedDirs.txt")
+
+	if err != nil {
+		fmt.Println("Error reading file, creating new file:", err)
+	}
+
+	exludedDirsFromFile := strings.Split(string(data), "\n")
+
+	return slices.Contains(exludedDirsFromFile, cleanDirPath) || slices.Contains(excludedDirsArray, cleanDirPath)
+}
+
+// Note: We are executing this command even if the redact command is sent, so we can update the presence
 func handleStandardConnection(message string, excludedDirsArray []string, startTime time.Time) {
 	cleanDirPath, filename, gitRepo := utils.ExtractStatusParams(message)
 
-	var isRedacted = slices.Contains(excludedDirsArray, cleanDirPath)
+	var isRedacted = isRedacted(excludedDirsArray, cleanDirPath)
 
 	discord.UpdateDiscordPresence(&discordAppId, startTime, &filename, &gitRepo, isRedacted)
+}
 
+func handleRedactCommand(message string, excludedDirsArray *[]string) string {
+	if !strings.Contains(message, "redact") {
+		return ""
+	}
+
+	cleanDirPath, filename, gitRepo := utils.ExtractStatusParams(message)
+	fmt.Println(cleanDirPath, filename, gitRepo)
+
+	data, err := os.ReadFile("./excludedDirs.txt")
+
+	if err != nil {
+		fmt.Println("Error reading file, creating new file:", err)
+	}
+
+	exludedDirsFromFile := strings.Split(string(data), "\n")
+
+  var command string
+
+	if slices.Contains(exludedDirsFromFile, cleanDirPath) || slices.Contains(*excludedDirsArray, cleanDirPath) {
+		exludedDirsFromFile = utils.RemoveStringFromSlice(exludedDirsFromFile, cleanDirPath)
+		fmt.Println("Removed", exludedDirsFromFile)
+
+    command = UNREDACT_COMMAND
+	} else {
+		exludedDirsFromFile = append(exludedDirsFromFile, cleanDirPath)
+
+    command = REDACT_COMMAND
+	}
+
+	file, err := os.OpenFile("./excludedDirs.txt", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+	for _, dir := range exludedDirsFromFile {
+    if strings.TrimSpace(dir) == "" {
+      continue
+    }
+
+		file.WriteString(dir + "\n")
+	}
+
+	file.Close()
+
+  return command
 }
 
 func HandleTCPClient(conn net.Conn, startTime time.Time) {
@@ -85,8 +146,11 @@ func HandleTCPClient(conn net.Conn, startTime time.Time) {
 			continue
 		}
 
+    redactCommand := handleRedactCommand(message, &excludedDirsArray)
 		handleStandardConnection(message, excludedDirsArray, startTime)
+
+    if redactCommand != "" {
+      conn.Write([]byte(redactCommand))
+    }
 	}
 }
-
-

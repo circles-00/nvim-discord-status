@@ -52,7 +52,7 @@ You can overwrite a binding via opts, or use the default one (seen above), or ca
 
 # Screenshots
 ![image](https://github.com/circles-00/nvim-discord-status/assets/42126548/35026021-4c41-4e34-9611-204668ac1832)
-
-Redacted
+-
+### Redacted:
 ![image](https://github.com/circles-00/nvim-discord-status/assets/42126548/448dd309-dbf1-4e95-a826-6e292a735762)
 

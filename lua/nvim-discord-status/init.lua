@@ -34,16 +34,11 @@ function NvimDiscordStatus:setup(opts)
   self.opts = opts
 
   self.actions:connect(opts)
+  self.actions:registerCommands(opts.cmdBinding)
 end
 
-
---endexcludeOrIncludeDirectory = function ()
---  print("implement")
---end
-
--- local function registerCommands(binding)
---   vim.cmd('command! Redact lua require("nvim-discord-status").excludeOrIncludeDirectory()')
---   vim.keymap.set('n', binding, M.excludeOrIncludeDirectory, {noremap = true, silent = true})
--- end
+function NvimDiscordStatus:excludeOrIncludeDirectory()
+  self.actions:excludeOrIncludeDirectory()
+end
 
 return NvimDiscordStatus.new()

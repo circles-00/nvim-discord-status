@@ -45,4 +45,21 @@ M.asyncSleep = function(seconds, callback)
   return job_id
 end
 
+M.getFilePathAndGitRepo = function()
+  local filename = vim.fn.expand('%:p')
+  local handle = io.popen("basename `git rev-parse --show-toplevel`")
+  if (handle == nil) then
+    return
+  end
+
+  local result = handle:read("*a")
+
+  handle:close()
+
+  return {
+    filename = filename,
+    git_repo = result
+  }
+end
+
 return M

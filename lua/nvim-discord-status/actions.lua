@@ -1,25 +1,25 @@
-local host, port = "127.0.0.1", 49069
 local TCPClient = require('nvim-discord-status.tcp_client')
 local utils = require('nvim-discord-status.utils')
 local JSON = require('JSON')
 
-
 ---@class NvimDiscordStatusActions
+---@field host string
+---@field port number
 ---@field client TCPClient
 local NvimDiscordStatusActions = {}
 
 NvimDiscordStatusActions.__index = NvimDiscordStatusActions
 
-
 ---@return NvimDiscordStatusActions
 function NvimDiscordStatusActions.new()
   local self = setmetatable({
+    host = "127.0.0.1",
+    port = 49069,
     client = TCPClient:new()
   }, NvimDiscordStatusActions)
 
-    return self
+  return self
 end
-
 
 ---@param setupOpts NvimDiscordStatusOptions
 function NvimDiscordStatusActions:connect(setupOpts)
@@ -39,7 +39,7 @@ function NvimDiscordStatusActions:connect(setupOpts)
 
       -- Wait for the TCP server to start
       utils.asyncSleep(0.5, function()
-        self.client:connect(host, port)
+        self.client:connect(self.host, self.port)
         self.client:send("connect:" .. setupOpts.discordAppId .. ":" .. JSON:encode(setupOpts.excludedDirs))
       end)
     end
@@ -48,16 +48,13 @@ function NvimDiscordStatusActions:connect(setupOpts)
   vim.api.nvim_create_autocmd({ "BufEnter" }, {
     pattern = { "*" },
     callback = function()
-      local filename = vim.fn.expand('%:p')
-      local handle = io.popen("basename `git rev-parse --show-toplevel`")
-      if (handle == nil) then
+      local result = utils.getFilePathAndGitRepo()
+
+      if (result == nil) then
         return
       end
 
-      local result = handle:read("*a")
-      self.client:send(filename .. ":" .. result);
-
-      handle:close()
+      self.client:send(result.filename .. ":" .. result.git_repo);
     end
   })
 
@@ -68,8 +65,21 @@ function NvimDiscordStatusActions:connect(setupOpts)
       self.client:close()
     end
   })
-
 end
 
+function NvimDiscordStatusActions:excludeOrIncludeDirectory()
+  local result = utils.getFilePathAndGitRepo()
+
+  if (result == nil) then
+    return
+  end
+
+  self.client:send("redact:" .. result.filename .. ":" .. result.git_repo);
+end
+
+function NvimDiscordStatusActions:registerCommands(binding)
+  vim.cmd('command! Redact lua require("nvim-discord-status"):excludeOrIncludeDirectory()')
+  vim.keymap.set('n', binding, self.excludeOrIncludeDirectory, { noremap = true, silent = true })
+end
 
 return NvimDiscordStatusActions

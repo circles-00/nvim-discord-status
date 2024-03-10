@@ -1,1 +1,0 @@
-/home/darknet/CodingProjects/personal/nvim-discord-status

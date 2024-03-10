@@ -3,6 +3,7 @@
 local socket = require("socket")
 
 -- Create a table to hold the client object
+---@class TCPClient
 local TCPClient = {}
 
 -- Constructor

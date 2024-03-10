@@ -25,11 +25,16 @@ You need to create a Discord application and get the client ID. You can do this 
 
 Once you have the client ID, you can set it in your `init.vim` or `init.lua` file.
 
+You can also exclude certain directories from being displayed in the status by setting the `excludedDirs` option.
+If you're currently working in a directory that is included in the `excludedDirs`, the status will show `[REDACTED]`, for that particular directory.
+
+
 ```lua
 local nvim_discord_status = require("nvim-discord-status")
 
 nvim_discord_status.setup({
-   discordAppId  = "YOUR_APP_ID"
+   discordAppId  = "YOUR_APP_ID",
+   excludedDirs = { "some_dir" }
 })
 ```
 

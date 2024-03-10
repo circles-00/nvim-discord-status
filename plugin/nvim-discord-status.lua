@@ -2,6 +2,7 @@ local host, port = "127.0.0.1", 49069
 local TCPClient = require('nvim-discord-status.tcp_client')
 local utils = require('nvim-discord-status.utils')
 local setupOpts = require('nvim-discord-status')
+local JSON = require('JSON')
 
 local client = TCPClient:new()
 
@@ -20,9 +21,9 @@ vim.api.nvim_create_autocmd({ "VimEnter" }, {
     io.popen(absolute_path)
 
     -- Wait for the TCP server to start
-    utils.asyncSleep(1, function()
+    utils.asyncSleep(0.5, function()
       client:connect(host, port)
-      client:send("connect:" .. setupOpts.opts.discordAppId)
+      client:send("connect:" .. setupOpts.opts.discordAppId .. ":" .. JSON:encode(setupOpts.opts.excludedDirs))
     end)
   end
 })

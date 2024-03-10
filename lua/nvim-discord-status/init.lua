@@ -2,10 +2,11 @@ local M = {}
 
 M.setup = function(opts)
   opts = opts or {}
+  opts.excludedDirs = opts.excludedDirs or {}
 
-  local discordAppId = opts.discordAppId or error("Missing required option 'discordAppId'")
-
-  opts.discordAppId  = discordAppId
+  if(opts.discordAppId == nil) then
+    error("Missing required option 'discordAppId'")
+  end
 
   M.opts             = opts
 end

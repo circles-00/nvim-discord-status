@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
+	"slices"
 	"strings"
 	"time"
 
@@ -12,7 +14,7 @@ import (
 var discordAppId = ""
 var numberOfClients = 0
 
-func updateDiscordPresence(discordAppId *string, t time.Time, filename *string, gitRepo *string) {
+func updateDiscordPresence(discordAppId *string, t time.Time, filename *string, gitRepo *string, isRedacted bool) {
 	if discordAppId == nil || len(*discordAppId) == 0 {
 		panic("Discord App ID is required")
 	}
@@ -33,12 +35,16 @@ func updateDiscordPresence(discordAppId *string, t time.Time, filename *string, 
 		},
 	}
 
-	if gitRepo != nil {
+	if gitRepo != nil && !isRedacted {
 		activity.Details = *gitRepo
 	}
 
 	if filename != nil {
-		activity.State = *filename
+		if isRedacted {
+			activity.State = "[REDACTED]"
+		} else {
+			activity.State = *filename
+		}
 	}
 
 	err = client.SetActivity(activity)
@@ -49,51 +55,97 @@ func updateDiscordPresence(discordAppId *string, t time.Time, filename *string, 
 
 }
 
+func handlePanicTCPClient(err error) bool {
+	if err != nil {
+		numberOfClients = numberOfClients - 1
+		fmt.Println("Error reading data from client:", err, numberOfClients)
+
+		if numberOfClients == 0 && discordAppId != "" {
+			panic("No more clients")
+		}
+
+		return true
+	}
+
+	return false
+}
+
+func handleInitialClientConnection(message string, startTime time.Time, excludedDirsArray *[]string) bool {
+	if strings.Contains(message, "connect") {
+		onConnectArguments := strings.Split(message, ":")
+
+		discordAppId = onConnectArguments[1]
+		excludedDirs := onConnectArguments[2]
+
+		err := json.Unmarshal([]byte(excludedDirs), &excludedDirsArray)
+
+		if err != nil {
+			fmt.Println("Error parsing excluded dirs:", err)
+		}
+
+		updateDiscordPresence(&discordAppId, startTime, nil, nil, false)
+
+		return true
+	}
+
+	return false
+}
+
+func extractStatusParams(message string) (string, string, string) {
+	// format: filePath:gitRepo
+	dirParts := strings.Split(message, "/")
+	filenameAndGitRepo := dirParts[len(dirParts)-1]
+
+	fileParts := strings.Split(filenameAndGitRepo, ":")
+	filename := fileParts[0]
+	gitRepo := fileParts[1]
+
+	var cleanDirPath = strings.Split(message, strings.TrimSpace(gitRepo))[0] + strings.TrimSpace(gitRepo)
+	if strings.Contains(cleanDirPath, "fugitive://") {
+		cleanDirPath = strings.Split(cleanDirPath, "fugitive://")[1]
+	}
+
+	return cleanDirPath, filename, gitRepo
+}
+
 func handleTCPClient(conn net.Conn, startTime time.Time) {
 	defer conn.Close()
 
 	// Create a buffer to read data into
 	buffer := make([]byte, 1024)
 
+	var excludedDirsArray []string
+
 	for {
 		// Read data from the client
 		bufferData, err := conn.Read(buffer)
-		if err != nil {
-      numberOfClients = numberOfClients - 1
-			fmt.Println("Error reading data from client:", err, numberOfClients)
 
-      if numberOfClients == 0 && discordAppId != "" {
-        panic("No more clients")
-      }
-
+		var isClientClosed = handlePanicTCPClient(err)
+		if isClientClosed {
 			return
 		}
 
+		// format: filePath:gitRepo
 		message := string(buffer[:bufferData])
 
-		if strings.Contains(message, "connect") {
-			discordAppIdFromSocket := strings.Split(message, ":")[1]
-			discordAppId = discordAppIdFromSocket
-			updateDiscordPresence(&discordAppId, startTime, nil, nil)
+		isInitialConnection := handleInitialClientConnection(message, startTime, &excludedDirsArray)
 
+		if isInitialConnection {
 			continue
 		}
 
-		dirParts := strings.Split(message, "/")
-		filenameAndGitRepo := dirParts[len(dirParts)-1]
-		filename := strings.Split(filenameAndGitRepo, ":")[0]
-		gitRepo := strings.Split(filenameAndGitRepo, ":")[1]
+		cleanDirPath, filename, gitRepo := extractStatusParams(message)
 
-		if len(filename) > 0 {
-			updateDiscordPresence(&discordAppId, startTime, &filename, &gitRepo)
-		}
+		var isRedacted = slices.Contains(excludedDirsArray, cleanDirPath)
+
+		updateDiscordPresence(&discordAppId, startTime, &filename, &gitRepo, isRedacted)
 	}
 }
 
 func main() {
 
 	// Listen for incoming connections
-  const port = 49069
+	const port = 49069
 	listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 	if err != nil {
 		fmt.Println("Error:", err)
@@ -113,7 +165,7 @@ func main() {
 			continue
 		}
 
-    numberOfClients = numberOfClients + 1
+		numberOfClients = numberOfClients + 1
 		// Handle client connection in a goroutine
 		go handleTCPClient(conn, t)
 	}

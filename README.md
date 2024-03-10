@@ -51,5 +51,8 @@ The status will dissapear when you close all instances of Neovim.
 You can overwrite a binding via opts, or use the default one (seen above), or call `:Redact` command
 
 # Screenshots
-![image](https://github.com/circles-00/nvim-discord-status/assets/42126548/3afab290-5478-41d8-bd68-9e91a52edbaa)
+![image](https://github.com/circles-00/nvim-discord-status/assets/42126548/35026021-4c41-4e34-9611-204668ac1832)
+
+Redacted
+![image](https://github.com/circles-00/nvim-discord-status/assets/42126548/448dd309-dbf1-4e95-a826-6e292a735762)
 

@@ -37,7 +37,7 @@ func UpdateDiscordPresence(discordAppId *string, t time.Time, filename *string, 
 		Timestamps: &client.Timestamps{
 			Start: &t,
 		},
-	}
+ 	}
 
 	if gitRepo != nil && !isRedacted {
 		activity.Details = *gitRepo

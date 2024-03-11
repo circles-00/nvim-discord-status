@@ -12,12 +12,14 @@ import (
 	"time"
 )
 
-var discordAppId = ""
+var DiscordAppId = ""
 var NumberOfClients = 0
+var timeout *time.Timer
+const TIMEOUT_DURATION = 30 // seconds
 
 const (
-  REDACT_COMMAND = "redact"
-  UNREDACT_COMMAND = "unredact"
+	REDACT_COMMAND   = "redact"
+	UNREDACT_COMMAND = "unredact"
 )
 
 func handlePanicTCPClient(err error) bool {
@@ -25,8 +27,14 @@ func handlePanicTCPClient(err error) bool {
 		NumberOfClients = NumberOfClients - 1
 		fmt.Println("Error reading data from client:", err, NumberOfClients)
 
-		if NumberOfClients == 0 && discordAppId != "" {
-			panic("No more clients")
+		if NumberOfClients == 0 && DiscordAppId != "" {
+			//panic("No more clients")
+			timeout = time.NewTimer(time.Duration(TIMEOUT_DURATION) * time.Second)
+
+			go func() {
+				<-timeout.C
+				panic("No more clients")
+			}()
 		}
 
 		return true
@@ -39,7 +47,7 @@ func handleInitialClientConnection(message string, startTime time.Time, excluded
 	if strings.Contains(message, "connect") {
 		onConnectArguments := strings.Split(message, ":")
 
-		discordAppId = onConnectArguments[1]
+		DiscordAppId = onConnectArguments[1]
 		excludedDirs := onConnectArguments[2]
 
 		err := json.Unmarshal([]byte(excludedDirs), &excludedDirsArray)
@@ -48,7 +56,7 @@ func handleInitialClientConnection(message string, startTime time.Time, excluded
 			fmt.Println("Error parsing excluded dirs:", err)
 		}
 
-		discord.UpdateDiscordPresence(&discordAppId, startTime, nil, nil, false)
+		discord.UpdateDiscordPresence(&DiscordAppId, startTime, nil, nil, false)
 
 		return true
 	}
@@ -74,7 +82,7 @@ func handleStandardConnection(message string, excludedDirsArray []string, startT
 
 	var isRedacted = isRedacted(excludedDirsArray, cleanDirPath)
 
-	discord.UpdateDiscordPresence(&discordAppId, startTime, &filename, &gitRepo, isRedacted)
+	discord.UpdateDiscordPresence(&DiscordAppId, startTime, &filename, &gitRepo, isRedacted)
 }
 
 func handleRedactCommand(message string, excludedDirsArray *[]string) string {
@@ -93,35 +101,39 @@ func handleRedactCommand(message string, excludedDirsArray *[]string) string {
 
 	exludedDirsFromFile := strings.Split(string(data), "\n")
 
-  var command string
+	var command string
 
 	if slices.Contains(exludedDirsFromFile, cleanDirPath) || slices.Contains(*excludedDirsArray, cleanDirPath) {
 		exludedDirsFromFile = utils.RemoveStringFromSlice(exludedDirsFromFile, cleanDirPath)
 		fmt.Println("Removed", exludedDirsFromFile)
 
-    command = UNREDACT_COMMAND
+		command = UNREDACT_COMMAND
 	} else {
 		exludedDirsFromFile = append(exludedDirsFromFile, cleanDirPath)
 
-    command = REDACT_COMMAND
+		command = REDACT_COMMAND
 	}
 
 	file, err := os.OpenFile("./excludedDirs.txt", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
 	for _, dir := range exludedDirsFromFile {
-    if strings.TrimSpace(dir) == "" {
-      continue
-    }
+		if strings.TrimSpace(dir) == "" {
+			continue
+		}
 
 		file.WriteString(dir + "\n")
 	}
 
 	file.Close()
 
-  return command
+	return command
 }
 
 func HandleTCPClient(conn net.Conn, startTime time.Time) {
 	defer conn.Close()
+  if timeout != nil {
+    timeout.Stop()
+    timeout = nil
+  }
 
 	// Create a buffer to read data into
 	buffer := make([]byte, 1024)
@@ -146,11 +158,11 @@ func HandleTCPClient(conn net.Conn, startTime time.Time) {
 			continue
 		}
 
-    redactCommand := handleRedactCommand(message, &excludedDirsArray)
+		redactCommand := handleRedactCommand(message, &excludedDirsArray)
 		handleStandardConnection(message, excludedDirsArray, startTime)
 
-    if redactCommand != "" {
-      conn.Write([]byte(redactCommand))
-    }
+		if redactCommand != "" {
+			conn.Write([]byte(redactCommand))
+		}
 	}
 }

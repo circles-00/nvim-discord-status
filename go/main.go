@@ -5,7 +5,7 @@ import (
 	"net"
 	"time"
 
-  tcp "discord_status/tcp"
+	tcp "discord_status/tcp"
 )
 
 func main() {

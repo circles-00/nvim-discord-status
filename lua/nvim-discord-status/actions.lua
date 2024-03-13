@@ -33,7 +33,7 @@ function NvimDiscordStatusActions:connect(setupOpts)
       local path_to_script = utils.removeLastThreeParts(script_path)
 
       -- local absolute_path = "/" .. path_to_script .. "/" .. "go/discord_status > log.txt 2>&1 &"
-      local absolute_path = "/" .. path_to_script .. "/" .. "go/discord_status /dev/null 2>&1 &"
+      local absolute_path = "/" .. path_to_script .. "/" .. "go/discord_status > /dev/null 2>&1 &"
       io.popen(absolute_path)
 
       -- Wait for the TCP server to start

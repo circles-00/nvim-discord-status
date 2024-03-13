@@ -16,7 +16,7 @@ var DiscordAppId = ""
 var NumberOfClients = 0
 var timeout *time.Timer
 const TIMEOUT_DURATION = 30 // seconds
-var excludedDirsFile = fmt.Sprintf("%s/excludedDirs.txt", os.Getenv("HOME"))
+var excludedDirsFile = fmt.Sprintf("%s/nvim-discord-status-excludedDirs.txt", os.Getenv("HOME"))
 
 const (
 	REDACT_COMMAND   = "redact"
@@ -98,6 +98,7 @@ func handleRedactCommand(message string, excludedDirsArray *[]string) string {
 
 	if err != nil {
 		fmt.Println("Error reading file, creating new file:", err)
+    os.Create(excludedDirsFile)
 	}
 
 	exludedDirsFromFile := strings.Split(string(data), "\n")

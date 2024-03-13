@@ -65,7 +65,7 @@ func handleInitialClientConnection(message string, startTime time.Time, excluded
 }
 
 func isRedacted(excludedDirsArray []string, cleanDirPath string) bool {
-	data, err := os.ReadFile("~/nivm-discord-status/excludedDirs.txt")
+	data, err := os.ReadFile("~/nvim-discord-status/excludedDirs.txt")
 
 	if err != nil {
 		fmt.Println("Error reading file, creating new file:", err)
@@ -93,7 +93,7 @@ func handleRedactCommand(message string, excludedDirsArray *[]string) string {
 	cleanDirPath, filename, gitRepo := utils.ExtractStatusParams(message)
 	fmt.Println(cleanDirPath, filename, gitRepo)
 
-	data, err := os.ReadFile("~/nivm-discord-status/excludedDirs.txt")
+	data, err := os.ReadFile("~/nvim-discord-status/excludedDirs.txt")
 
 	if err != nil {
 		fmt.Println("Error reading file, creating new file:", err)
@@ -114,7 +114,7 @@ func handleRedactCommand(message string, excludedDirsArray *[]string) string {
 		command = REDACT_COMMAND
 	}
 
-	file, err := os.OpenFile("~/nivm-discord-status/excludedDirs.txt", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+	file, err := os.OpenFile("~/nvim-discord-status/excludedDirs.txt", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
 	for _, dir := range exludedDirsFromFile {
 		if strings.TrimSpace(dir) == "" {
 			continue

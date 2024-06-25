@@ -12,16 +12,23 @@ local NvimDiscordStatus = {}
 NvimDiscordStatus.__index = NvimDiscordStatus
 
 ---@return NvimDiscordStatus
-function NvimDiscordStatus.new()
-  local self = setmetatable({
+function NvimDiscordStatus:new()
+  local nvimDiscordStatus = setmetatable({
     actions = NvimDiscordStatusActions.new(),
   }, NvimDiscordStatus)
 
-  return self
+  return nvimDiscordStatus
 end
 
+local theNvimDiscordStatus = NvimDiscordStatus:new()
+
+---@param self NvimDiscordStatus
 ---@param opts NvimDiscordStatusOptions
-function NvimDiscordStatus:setup(opts)
+function NvimDiscordStatus.setup(self, opts)
+  if self ~= theNvimDiscordStatus then
+    self = theNvimDiscordStatus
+  end
+
   opts = opts or {}
   opts.excludedDirs = opts.excludedDirs or {}
   opts.cmdBinding = opts.cmdBinding or "<C-x>"
@@ -40,4 +47,4 @@ function NvimDiscordStatus:excludeOrIncludeDirectory()
   self.actions:excludeOrIncludeDirectory()
 end
 
-return NvimDiscordStatus.new()
+return theNvimDiscordStatus

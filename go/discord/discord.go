@@ -13,7 +13,7 @@ func UpdateDiscordPresence(discordAppId *string, t time.Time, filename *string, 
 		panic("Discord App ID is required")
 	}
 
-	var fileExtension = ""
+	fileExtension := ""
 	if filename != nil {
 		fileExtensionParts := strings.Split(*filename, ".")
 		if len(fileExtensionParts) > 1 {
@@ -24,26 +24,25 @@ func UpdateDiscordPresence(discordAppId *string, t time.Time, filename *string, 
 	extensionImage := GetLanguageUrl(fmt.Sprintf(".%s", fileExtension), isRedacted)
 
 	err := client.Login(*discordAppId)
-
 	if err != nil {
 		panic(err)
 	}
 
-	var activity = client.Activity{
+	activity := client.Activity{
 		LargeImage: extensionImage,
 		SmallImage: "https://icons.iconarchive.com/icons/papirus-team/papirus-apps/512/nvim-icon.png",
 		SmallText:  "NeoVim the best editor ever",
-    Details: "Idle", // Default
+		Details:    "Idle", // Default
 		Timestamps: &client.Timestamps{
 			Start: &t,
 		},
- 	}
+	}
 
 	if gitRepo != nil && !isRedacted {
 		activity.Details = *gitRepo
 	} else if isRedacted {
-    activity.Details = ""
-  }
+		activity.Details = ""
+	}
 
 	if filename != nil {
 		if isRedacted {
@@ -58,5 +57,4 @@ func UpdateDiscordPresence(discordAppId *string, t time.Time, filename *string, 
 	if err != nil {
 		panic(err)
 	}
-
 }

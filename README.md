@@ -9,6 +9,10 @@ The GoLang application is a simple TCP server that listens for connections from 
 The lua part creates a TCP connection to the GoLang server and sends the status to be updated.
 
 # Installation
+Using LazyVim
+```vim
+return { 'circles-00/nvim-discord-status' }
+```
 
 Using Packer
 ```lua
@@ -22,6 +26,7 @@ Plug 'circles-00/nvim-discord-status'
 
 # Setup
 You need to create a Discord application and get the client ID. You can do this by going to the [Discord Developer Portal](https://discord.com/developers/applications) and creating a new application.
+Also make sure that you have enabled sharing your activity in your Discord Settings.
 
 Once you have the client ID, you can set it in your `init.vim` or `init.lua` file.
 
@@ -32,7 +37,7 @@ If you're currently working in a directory that is included in the `excludedDirs
 ```lua
 local nvim_discord_status = require("nvim-discord-status")
 
-nvim_discord_status.setup({
+nvim_discord_status:setup({
    discordAppId  = "YOUR_APP_ID",
    excludedDirs = { "some_dir" },
    cmdBinding  = "<C-x>"

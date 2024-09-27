@@ -23,7 +23,7 @@ end
 local theNvimDiscordStatus = NvimDiscordStatus:new()
 
 ---@param self NvimDiscordStatus
----@param opts NvimDiscordStatusOptions
+---@param opts NvimDiscordStatusOptions?
 function NvimDiscordStatus.setup(self, opts)
   if self ~= theNvimDiscordStatus then
     self = theNvimDiscordStatus
@@ -41,6 +41,8 @@ function NvimDiscordStatus.setup(self, opts)
 
   self.actions:connect(opts)
   self.actions:registerCommands(opts.cmdBinding)
+
+  return self
 end
 
 function NvimDiscordStatus:excludeOrIncludeDirectory()

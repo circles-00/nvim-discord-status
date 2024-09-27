@@ -1,8 +1,6 @@
 package tcp
 
 import (
-	"discord_status/discord"
-	"discord_status/utils"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -10,11 +8,17 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	"discord_status/discord"
+	"discord_status/utils"
 )
 
-var DiscordAppId = ""
-var NumberOfClients = 0
-var timeout *time.Timer
+var (
+	DiscordAppId    = ""
+	NumberOfClients = 0
+	timeout         *time.Timer
+)
+
 const TIMEOUT_DURATION = 30 // seconds
 var excludedDirsFile = fmt.Sprintf("%s/nvim-discord-status-excludedDirs.txt", os.Getenv("HOME"))
 
@@ -29,7 +33,7 @@ func handlePanicTCPClient(err error) bool {
 		fmt.Println("Error reading data from client:", err, NumberOfClients)
 
 		if NumberOfClients == 0 && DiscordAppId != "" {
-			//panic("No more clients")
+			// panic("No more clients")
 			timeout = time.NewTimer(time.Duration(TIMEOUT_DURATION) * time.Second)
 
 			go func() {
@@ -52,11 +56,11 @@ func handleInitialClientConnection(message string, startTime time.Time, excluded
 		excludedDirs := onConnectArguments[2]
 
 		err := json.Unmarshal([]byte(excludedDirs), &excludedDirsArray)
-
 		if err != nil {
 			fmt.Println("Error parsing excluded dirs:", err)
 		}
 
+		fmt.Printf("Message: %s\n", message)
 		discord.UpdateDiscordPresence(&DiscordAppId, startTime, nil, nil, false)
 
 		return true
@@ -67,7 +71,6 @@ func handleInitialClientConnection(message string, startTime time.Time, excluded
 
 func isRedacted(excludedDirsArray []string, cleanDirPath string) bool {
 	data, err := os.ReadFile(excludedDirsFile)
-
 	if err != nil {
 		fmt.Println("Error reading file, creating new file:", err)
 	}
@@ -81,7 +84,7 @@ func isRedacted(excludedDirsArray []string, cleanDirPath string) bool {
 func handleStandardConnection(message string, excludedDirsArray []string, startTime time.Time) {
 	cleanDirPath, filename, gitRepo := utils.ExtractStatusParams(message)
 
-	var isRedacted = isRedacted(excludedDirsArray, cleanDirPath)
+	isRedacted := isRedacted(excludedDirsArray, cleanDirPath)
 
 	discord.UpdateDiscordPresence(&DiscordAppId, startTime, &filename, &gitRepo, isRedacted)
 }
@@ -95,10 +98,9 @@ func handleRedactCommand(message string, excludedDirsArray *[]string) string {
 	fmt.Println(cleanDirPath, filename, gitRepo)
 
 	data, err := os.ReadFile(excludedDirsFile)
-
 	if err != nil {
 		fmt.Println("Error reading file, creating new file:", err)
-    os.Create(excludedDirsFile)
+		os.Create(excludedDirsFile)
 	}
 
 	exludedDirsFromFile := strings.Split(string(data), "\n")
@@ -116,7 +118,7 @@ func handleRedactCommand(message string, excludedDirsArray *[]string) string {
 		command = REDACT_COMMAND
 	}
 
-	file, err := os.OpenFile(excludedDirsFile, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+	file, err := os.OpenFile(excludedDirsFile, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0o644)
 	for _, dir := range exludedDirsFromFile {
 		if strings.TrimSpace(dir) == "" {
 			continue
@@ -132,10 +134,10 @@ func handleRedactCommand(message string, excludedDirsArray *[]string) string {
 
 func HandleTCPClient(conn net.Conn, startTime time.Time) {
 	defer conn.Close()
-  if timeout != nil {
-    timeout.Stop()
-    timeout = nil
-  }
+	if timeout != nil {
+		timeout.Stop()
+		timeout = nil
+	}
 
 	// Create a buffer to read data into
 	buffer := make([]byte, 1024)
@@ -146,7 +148,7 @@ func HandleTCPClient(conn net.Conn, startTime time.Time) {
 		// Read data from the client
 		bufferData, err := conn.Read(buffer)
 
-		var isClientClosed = handlePanicTCPClient(err)
+		isClientClosed := handlePanicTCPClient(err)
 		if isClientClosed {
 			return
 		}

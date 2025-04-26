@@ -39,7 +39,7 @@ func UpdateDiscordPresence(discordAppId *string, t time.Time, filename *string, 
 	}
 
 	if gitRepo != nil && !isRedacted {
-		activity.Details = *gitRepo
+		activity.Details = fmt.Sprintf("Workspace: %s", *gitRepo)
 	} else if isRedacted {
 		activity.Details = ""
 	}
@@ -48,7 +48,7 @@ func UpdateDiscordPresence(discordAppId *string, t time.Time, filename *string, 
 		if isRedacted {
 			activity.State = "[REDACTED]"
 		} else {
-			activity.State = *filename
+			activity.State = fmt.Sprintf("Editing %s", *filename)
 		}
 	}
 
